@@ -1,0 +1,10 @@
+/home/pdr/synapse/base/shape/target/debug/deps/alloy_network_primitives-57a04087222da449.d: /home/pdr/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/alloy-network-primitives-1.4.0/src/lib.rs /home/pdr/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/alloy-network-primitives-1.4.0/src/traits.rs /home/pdr/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/alloy-network-primitives-1.4.0/src/block.rs /home/pdr/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/alloy-network-primitives-1.4.0/src/tx_builders.rs /home/pdr/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/alloy-network-primitives-1.4.0/src/tx_meta.rs /home/pdr/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/alloy-network-primitives-1.4.0/src/../README.md
+
+/home/pdr/synapse/base/shape/target/debug/deps/liballoy_network_primitives-57a04087222da449.rmeta: /home/pdr/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/alloy-network-primitives-1.4.0/src/lib.rs /home/pdr/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/alloy-network-primitives-1.4.0/src/traits.rs /home/pdr/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/alloy-network-primitives-1.4.0/src/block.rs /home/pdr/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/alloy-network-primitives-1.4.0/src/tx_builders.rs /home/pdr/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/alloy-network-primitives-1.4.0/src/tx_meta.rs /home/pdr/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/alloy-network-primitives-1.4.0/src/../README.md
+
+/home/pdr/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/alloy-network-primitives-1.4.0/src/lib.rs:
+/home/pdr/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/alloy-network-primitives-1.4.0/src/traits.rs:
+/home/pdr/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/alloy-network-primitives-1.4.0/src/block.rs:
+/home/pdr/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/alloy-network-primitives-1.4.0/src/tx_builders.rs:
+/home/pdr/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/alloy-network-primitives-1.4.0/src/tx_meta.rs:
+/home/pdr/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/alloy-network-primitives-1.4.0/src/../README.md:

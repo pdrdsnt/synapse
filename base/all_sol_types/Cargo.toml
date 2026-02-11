@@ -1,0 +1,9 @@
+[package]
+name = "all_sol_types"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+alloy-contract = "*"
+alloy-sol-types = "*"
+serde = "1.0.228"

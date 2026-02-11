@@ -1,0 +1,31 @@
+[workspace]
+resolver = "3"
+members = [
+  "./base/all_sol_types",
+  "./base/shape",
+  "./base/v3",
+  "synapse",
+]
+
+[workspace.dependencies]
+all_sol_types = { path = "./base/all_sol_types" }
+alloy = { version = "1.6.1", features = [
+  "contract",
+  "provider-ws",
+  "providers",
+  "pubsub",
+  "rpc-types",
+  "sol-types"
+] }
+alloy-primitives = "1.3.1"
+chains_json = { git = "https://github.com/pdrdsnt/chains_data_json_rust" }
+dashmap = "6.1.0"
+futures = "0.3.31"
+futures-util = "0.3"
+serde = { version = "1.0.223", features = ["derive"] }
+serde_json = "1.0.23"
+shape = { path = "./base/shape" }
+sqlx = { version = "0.8.6", features = ["postgres", "runtime-tokio", "uuid"] }
+tokio = { version = "1.47.1", features = ["rt-multi-thread"] }
+tower = "0.5.2"
+v3 = { path = "./base/v3" }

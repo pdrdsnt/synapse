@@ -1,0 +1,13 @@
+[package]
+name = "ReceiverFunnel"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+name = "receiver_funnel"  # Optional: customize library name
+path = "src/lib.rs"
+
+[dependencies]
+futures = "0.3.31"
+tokio = { version = "1.48.0", features = ["macros", "rt"] }
+tokio-stream = "0.1.17"

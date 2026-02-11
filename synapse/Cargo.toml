@@ -1,0 +1,12 @@
+[package]
+name = "synapse"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+all_sol_types.workspace = true
+alloy.workspace = true
+chains_json.workspace = true
+dashmap.workspace = true
+futures.workspace = true
+shape.workspace = true
