@@ -51,6 +51,7 @@ impl V4Config {
         }
     }
 }
+
 impl From<PoolKey> for V4Config {
     fn from(value: PoolKey) -> Self {
         Self {

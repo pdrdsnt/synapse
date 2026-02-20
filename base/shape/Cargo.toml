@@ -4,6 +4,6 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-all_sol_types = { git = "https://github.com/pdrdsnt/all_sol_types" }
+all_sol_types.workspace = true
 alloy.workspace = true
 serde = "1.0.228"

@@ -10,12 +10,15 @@ use alloy::{
     sol_types::SolEvent,
     transports::{RpcError, TransportErrorKind, http::reqwest::Url},
 };
-use chains_json::chains::ChainsJsonInput;
+//use chains_json::chains::ChainsJsonInput;
 use dashmap::DashMap;
 use shape::id_address::IdAddress;
 
-use crate::pool_event::{
-    UnifiedPoolEvent, UnifiedPoolEventResponse, generate_pool_events, generate_pools_events_map,
+use crate::{
+    master_context::MasterContext,
+    pool_event::{
+        UnifiedPoolEvent, UnifiedPoolEventResponse, generate_pool_events, generate_pools_events_map,
+    },
 };
 
 mod master_context;
@@ -74,7 +77,7 @@ async fn watch_chains() {
 
     let available_chains = chains.chains;
 
-    let master_context = for (idx, x) in available_chains.iter() {
+    let master_context = for (idx, x) in available_chains.iter().enumerate() {
         for url_str in x.ws_nodes_urls.iter() {
             let url = Url::from_str(url_str).unwrap();
             let ws_provider = match ws_provider(url).await {
@@ -135,7 +138,6 @@ pub async fn decode_logs_listener_blocking<P: Provider + Clone>(
                             .log_decode::<IUniswapV2Pair::Transfer>()
                             .ok()
                             .map(UnifiedPoolEventResponse::V2Transfer),
-
                         // Uniswap V3
                         UnifiedPoolEvent::V3Mint() => log
                             .log_decode::<V3Pool::Mint>()
@@ -157,7 +159,6 @@ pub async fn decode_logs_listener_blocking<P: Provider + Clone>(
                             .log_decode::<V3Pool::Flash>()
                             .ok()
                             .map(UnifiedPoolEventResponse::V3Flash),
-
                         // Uniswap V4 (PoolManager Events)
                         UnifiedPoolEvent::V4Swap() => log
                             .log_decode::<IPoolManager::Swap>()
@@ -176,8 +177,9 @@ pub async fn decode_logs_listener_blocking<P: Provider + Clone>(
                             .ok()
                             .map(UnifiedPoolEventResponse::V4Initialize),
                     };
+
                     if let Some(r) = response {
-                        r.handle(ctx);
+                        r.handle(ctx, chain_id);
                     }
                 }
             }

@@ -1,9 +1,4 @@
-use all_sol_types::sol_types::{
-    self, IPoolManager,
-    IUniswapV2Pair::{self, IUniswapV2PairEvents, Mint, Swap, Sync, Transfer},
-    StateView::{self, Donate, Initialize, ModifyLiquidity, StateViewEvents},
-    V3Pool::{self, Burn, Flash, V3PoolEvents},
-};
+use all_sol_types::sol_types::{self, IPoolManager};
 use alloy::{
     primitives::{
         Address, B256,
@@ -42,12 +37,15 @@ pub fn generate_pools_events_map()
     map.insert(v2_mint_hash, UnifiedPoolEvent::V2Mint());
 
     let v2_approval_hash = sol_types::IUniswapV2Pair::Approval::SIGNATURE_HASH;
+
     map.insert(v2_approval_hash, UnifiedPoolEvent::V2Approval());
 
     let v2_swap_hash = sol_types::IUniswapV2Pair::Swap::SIGNATURE_HASH;
+
     map.insert(v2_swap_hash, UnifiedPoolEvent::V2Swap());
 
     let v2_burn_hash = sol_types::IUniswapV2Pair::Burn::SIGNATURE_HASH;
+
     map.insert(v2_burn_hash, UnifiedPoolEvent::V2Burn());
 
     let v3_burn_hash = sol_types::V3Pool::Burn::SIGNATURE_HASH;
@@ -81,9 +79,9 @@ pub fn generate_pools_events_map()
 }
 
 pub fn generate_pool_events() -> Vec<&'static str> {
-    let v2_events = IUniswapV2PairEvents::SIGNATURES.clone();
-    let v3_events = V3PoolEvents::SIGNATURES.clone();
-    let v4_events = StateViewEvents::SIGNATURES.clone();
+    let v2_events = sol_types::IUniswapV2Pair::IUniswapV2PairEvents::SIGNATURES.clone();
+    let v3_events = sol_types::IUniswapV2Pair::IUniswapV2PairEvents::SIGNATURES.clone();
+    let v4_events = sol_types::StateView::StateViewEvents::SIGNATURES.clone();
     print!("==v4 events: {:?}", &v4_events);
     [v2_events, v3_events, v4_events].concat()
 }
@@ -115,19 +113,19 @@ pub enum UnifiedPoolEvent {
 #[derive(Debug, Clone)]
 pub enum UnifiedPoolEventResponse {
     // UNISWAP V2
-    V2Mint(Log<IUniswapV2Pair::Mint>),
-    V2Burn(Log<IUniswapV2Pair::Burn>),
-    V2Swap(Log<IUniswapV2Pair::Swap>),
-    V2Sync(Log<IUniswapV2Pair::Sync>),
-    V2Approval(Log<IUniswapV2Pair::Approval>),
-    V2Transfer(Log<IUniswapV2Pair::Transfer>),
+    V2Mint(Log<sol_types::IUniswapV2Pair::Mint>),
+    V2Burn(Log<sol_types::IUniswapV2Pair::Burn>),
+    V2Swap(Log<sol_types::IUniswapV2Pair::Swap>),
+    V2Sync(Log<sol_types::IUniswapV2Pair::Sync>),
+    V2Approval(Log<sol_types::IUniswapV2Pair::Approval>),
+    V2Transfer(Log<sol_types::IUniswapV2Pair::Transfer>),
 
     // UNISWAP V3
-    V3Mint(Log<V3Pool::Mint>),
-    V3Swap(Log<V3Pool::Swap>),
-    V3Collect(Log<V3Pool::Collect>),
-    V3Burn(Log<V3Pool::Burn>),
-    V3Flash(Log<V3Pool::Flash>),
+    V3Mint(Log<sol_types::V3Pool::Mint>),
+    V3Swap(Log<sol_types::V3Pool::Swap>),
+    V3Collect(Log<sol_types::V3Pool::Collect>),
+    V3Burn(Log<sol_types::V3Pool::Burn>),
+    V3Flash(Log<sol_types::V3Pool::Flash>),
 
     // UNISWAP V4 STATEVIEW
     V4Donate(Log<IPoolManager::Donate>),
@@ -137,16 +135,16 @@ pub enum UnifiedPoolEventResponse {
 }
 
 impl UnifiedPoolEventResponse {
-    pub fn handle(&self, ctx: &MasterContext) {
+    pub fn handle(&self, ctx: &MasterContext, chain_id: u64) {
         match self {
             UnifiedPoolEventResponse::V2Mint(log) => {}
-            UnifiedPoolEventResponse::V2Burn(log) => ctx.handle,
-            UnifiedPoolEventResponse::V2Swap(log) => ctx.swap(log),
+            UnifiedPoolEventResponse::V2Burn(log) => todo!(),
+            UnifiedPoolEventResponse::V2Swap(log) => ctx.handle_v2_swap(*log, chain_id),
             UnifiedPoolEventResponse::V2Sync(log) => todo!(),
             UnifiedPoolEventResponse::V2Approval(log) => todo!(),
             UnifiedPoolEventResponse::V2Transfer(log) => todo!(),
             UnifiedPoolEventResponse::V3Mint(log) => todo!(),
-            UnifiedPoolEventResponse::V3Swap(log) => todo!(),
+            UnifiedPoolEventResponse::V3Swap(log) => ctx.handle_v3_swap(log, chain_id),
             UnifiedPoolEventResponse::V3Collect(log) => todo!(),
             UnifiedPoolEventResponse::V3Burn(log) => todo!(),
             UnifiedPoolEventResponse::V3Flash(log) => todo!(),

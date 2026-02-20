@@ -1,0 +1,11 @@
+[package]
+name = "cortex"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+alloy.workspace = true
+dashmap.workspace = true
+shape.workspace = true
+tower = "0.5.2"
+url = "2.5.7"

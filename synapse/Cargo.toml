@@ -6,7 +6,9 @@ edition = "2024"
 [dependencies]
 all_sol_types.workspace = true
 alloy.workspace = true
+alloy-sol-types.workspace = true
 chains_json.workspace = true
+cortex.workspace = true
 dashmap.workspace = true
 futures.workspace = true
 shape.workspace = true

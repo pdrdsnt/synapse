@@ -1,4 +1,5 @@
-use alloy::primitives::{U160, aliases::I24};
+use all_sol_types::sol_types::IUniswapV2Pair::Swap;
+use alloy::primitives::{Log, U160, aliases::I24};
 
 #[derive(Debug)]
 pub enum AnyPoolState {
