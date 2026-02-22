@@ -139,12 +139,12 @@ impl UnifiedPoolEventResponse {
         match self {
             UnifiedPoolEventResponse::V2Mint(log) => {}
             UnifiedPoolEventResponse::V2Burn(log) => todo!(),
-            UnifiedPoolEventResponse::V2Swap(log) => ctx.handle_v2_swap(*log, chain_id),
+            UnifiedPoolEventResponse::V2Swap(log) => ctx.handle_v2_swap(log.to_owned(), chain_id),
             UnifiedPoolEventResponse::V2Sync(log) => todo!(),
             UnifiedPoolEventResponse::V2Approval(log) => todo!(),
             UnifiedPoolEventResponse::V2Transfer(log) => todo!(),
             UnifiedPoolEventResponse::V3Mint(log) => todo!(),
-            UnifiedPoolEventResponse::V3Swap(log) => ctx.handle_v3_swap(log, chain_id),
+            UnifiedPoolEventResponse::V3Swap(log) => ctx.handle_v3_swap(log.to_owned(), chain_id),
             UnifiedPoolEventResponse::V3Collect(log) => todo!(),
             UnifiedPoolEventResponse::V3Burn(log) => todo!(),
             UnifiedPoolEventResponse::V3Flash(log) => todo!(),

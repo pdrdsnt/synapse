@@ -10,6 +10,7 @@ use alloy::{
     sol_types::SolEvent,
     transports::{RpcError, TransportErrorKind, http::reqwest::Url},
 };
+use chains_json::{chain::ChainJsonInput, chains::ChainsJsonInput};
 //use chains_json::chains::ChainsJsonInput;
 use dashmap::DashMap;
 use shape::id_address::IdAddress;
@@ -77,7 +78,7 @@ async fn watch_chains() {
 
     let available_chains = chains.chains;
 
-    let master_context = for (idx, x) in available_chains.iter().enumerate() {
+    let master_context = for (idx, x) in available_chains.iter() {
         for url_str in x.ws_nodes_urls.iter() {
             let url = Url::from_str(url_str).unwrap();
             let ws_provider = match ws_provider(url).await {
@@ -115,15 +116,15 @@ pub async fn decode_logs_listener_blocking<P: Provider + Clone>(
                     let response = match res {
                         // Uniswap V2
                         UnifiedPoolEvent::V2Mint() => log
-                            .log_decode::<IUniswapV2Pair::Mint>()
+                            .log_decode::<all_sol_types::sol_types::IUniswapV2Pair::Mint>()
                             .ok()
                             .map(UnifiedPoolEventResponse::V2Mint),
                         UnifiedPoolEvent::V2Burn() => log
-                            .log_decode::<IUniswapV2Pair::Burn>()
+                            .log_decode::<all_sol_types::sol_types::IUniswapV2Pair::Burn>()
                             .ok()
                             .map(UnifiedPoolEventResponse::V2Burn),
                         UnifiedPoolEvent::V2Swap() => log
-                            .log_decode::<IUniswapV2Pair::Swap>()
+                            .log_decode::<all_sol_types::sol_types::IUniswapV2Pair::Swap>()
                             .ok()
                             .map(UnifiedPoolEventResponse::V2Swap),
                         UnifiedPoolEvent::V2Sync() => log

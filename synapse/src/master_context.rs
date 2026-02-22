@@ -3,10 +3,10 @@ use std::{
     sync::{Arc, Mutex, RwLock},
 };
 
-use all_sol_types::sol_types::{IUniswapV2Pair, V3Pool};
+use all_sol_types::sol_types::{IPoolManager, IUniswapV2Pair, PoolKey, V3Pool};
 use alloy::{
-    primitives::{Log, map::HashMap},
-    rpc::types::state,
+    primitives::map::HashMap,
+    rpc::types::{Log, state},
 };
 use cortex::{
     cortex::Cortex,
@@ -28,6 +28,7 @@ pub struct MasterContext {
     pools_by_token: DashMap<IdAddress, Vec<EvaluatedPool>>,
 
     v2_reserves_queue: Arc<Mutex<Vec<IdAddress>>>,
+    v4_not_found_queue: Arc<Mutex<Vec<IdKey>>>,
 }
 
 pub struct EvaluatedPool {
@@ -36,6 +37,30 @@ pub struct EvaluatedPool {
 }
 
 impl MasterContext {
+    pub fn handle_v4_swap(
+        &self,
+        log: Log<all_sol_types::sol_types::IPoolManager::Swap>,
+        chain_id: u64,
+    ) {
+        let key = IdKey {
+            id: chain_id,
+            key: log.inner.data.id,
+        };
+
+        let mut needs_update = false;
+
+        self.v4_pools.entry(key).and_modify(|x| {
+            if let Some(mut stt) = x.state.as_mut() {
+            } else {
+                needs_update = true;
+            }
+        });
+
+        if needs_update {
+            self.v4_not_found_queue.lock().unwrap().push(key);
+        }
+    }
+
     pub fn handle_v2_swap(
         &self,
         log: Log<all_sol_types::sol_types::IUniswapV2Pair::Swap>,
@@ -43,7 +68,7 @@ impl MasterContext {
     ) {
         let key = IdAddress {
             id: chain_id,
-            address: log.address,
+            address: log.address(),
         };
 
         let mut needs_update = false;
@@ -52,17 +77,17 @@ impl MasterContext {
             .entry(key)
             .and_modify(|x| {
                 if let Some(mut stt) = x.state.as_mut() {
-                    stt.r0 += log.amount0In.to::<u128>();
-                    stt.r1 += log.amount1In.to::<u128>();
-                    stt.r0 -= log.amount0Out.to::<u128>();
-                    stt.r1 -= log.amount1Out.to::<u128>();
+                    stt.r0 += log.inner.amount0In.to::<u128>();
+                    stt.r1 += log.inner.amount1In.to::<u128>();
+                    stt.r0 -= log.inner.amount0Out.to::<u128>();
+                    stt.r1 -= log.inner.amount1Out.to::<u128>();
                 } else {
                     needs_update = true;
                 }
             })
             .or_insert_with(|| PartialV2Pool {
                 chain: chain_id,
-                address: log.address,
+                address: log.address(),
                 config: None,
                 state: None,
             });
@@ -70,45 +95,43 @@ impl MasterContext {
         if needs_update {
             self.v2_reserves_queue.lock().unwrap().push(IdAddress {
                 id: chain_id,
-                address: log.address,
+                address: log.address(),
             });
         }
     }
 
-    pub fn handle_v3_swap(&self, log: &Log<V3Pool::Swap>, chain_id: u64) {
+    pub fn handle_v3_swap(&self, log: Log<V3Pool::Swap>, chain_id: u64) {
         let key = IdAddress {
             id: chain_id,
-            address: log.address,
+            address: log.address(),
         };
 
         self.v3_pools
             .entry(key)
             .and_modify(|x| match x.state.as_mut() {
                 Some(stt) => {
-                    stt.liquidity = log.liquidity;
-                    stt.tick = log.tick;
-                    stt.x96price = log.sqrtPriceX96;
+                    stt.liquidity = log.inner.liquidity;
+                    stt.tick = log.inner.tick;
+                    stt.x96price = log.inner.sqrtPriceX96;
                 }
                 None => {
                     let p = PartialV3Pool {
                         chain: chain_id,
-                        address: log.address,
+                        address: log.address(),
                         config: x.config.clone(),
                         state: Some(V3State {
-                            tick: log.tick,
-                            x96price: log.sqrtPriceX96,
-                            liquidity: log.liquidity,
+                            tick: log.inner.tick,
+                            x96price: log.inner.sqrtPriceX96,
+                            liquidity: log.inner.liquidity,
                         }),
                     };
                 }
             })
             .or_insert_with(|| PartialV3Pool {
                 chain: chain_id,
-                address: log.address,
+                address: log.address(),
                 config: None,
                 state: None,
             });
     }
-
-    pub fn handle_v4_swap(&self) {}
 }
