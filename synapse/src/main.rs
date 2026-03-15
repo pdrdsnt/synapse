@@ -22,9 +22,13 @@ use crate::{
     },
 };
 
+mod calls;
 mod master_context;
 mod pool_event;
 mod token_event;
+mod v2_fetcher;
+mod v3_fetcher;
+mod v4_fetcher;
 
 pub type WsProvider = alloy::providers::fillers::FillProvider<
     alloy::providers::fillers::JoinFill<
@@ -44,7 +48,8 @@ pub type WsProvider = alloy::providers::fillers::FillProvider<
 >;
 
 fn main() {
-    println!("Hello, world!");
+    let static = chains_json::chains::
+    let ctx = MasterContext::from(value);
 }
 
 pub async fn ws_sub<P: Provider + Clone>(

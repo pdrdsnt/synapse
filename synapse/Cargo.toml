@@ -12,3 +12,4 @@ cortex.workspace = true
 dashmap.workspace = true
 futures.workspace = true
 shape.workspace = true
+v3.workspace = true

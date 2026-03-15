@@ -3,32 +3,41 @@ use std::{
     sync::{Arc, Mutex, RwLock},
 };
 
-use all_sol_types::sol_types::{IPoolManager, IUniswapV2Pair, PoolKey, V3Pool};
+use all_sol_types::sol_types::{
+    IPoolManager::{self, IPoolManagerInstance},
+    IPositionManager::IPositionManagerInstance,
+    IUniswapV2Pair, PoolKey,
+    StateView::StateViewInstance,
+    V3Pool,
+};
 use alloy::{
-    primitives::map::HashMap,
+    primitives::{B256, U256, map::HashMap},
+    providers::{Provider, RootProvider, fillers::FillProvider},
     rpc::types::{Log, state},
 };
+use chains_json::chain_json_model::ChainDataJsonModel;
 use cortex::{
-    cortex::Cortex,
+    cortex::{Cortex, WsProvider},
     types::{AnyPartialPool, PartialV2Pool, PartialV3Pool, PartialV4Pool, PoolEvaluation},
 };
 use dashmap::{DashMap, Map};
+use futures::{SinkExt, channel::mpsc::Receiver, executor::block_on, stream::FuturesOrdered};
 use shape::{
     id_address::{IdAddress, IdKey},
-    p_config::V3Config,
+    p_config::{V3Config, V4Config},
     p_key::AnyPoolKey,
     p_state::V3State,
 };
 
+use crate::calls::{self, get_v4_key};
+
 pub struct MasterContext {
     v2_pools: DashMap<IdAddress, PartialV2Pool>,
     v3_pools: DashMap<IdAddress, PartialV3Pool>,
-    v4_pools: DashMap<IdKey, PartialV4Pool>,
 
     pools_by_token: DashMap<IdAddress, Vec<EvaluatedPool>>,
 
-    v2_reserves_queue: Arc<Mutex<Vec<IdAddress>>>,
-    v4_not_found_queue: Arc<Mutex<Vec<IdKey>>>,
+    v2_reserves_queue: Arc<RwLock<Vec<IdAddress>>>,
 }
 
 pub struct EvaluatedPool {
@@ -36,8 +45,76 @@ pub struct EvaluatedPool {
     eval: Option<PoolEvaluation>,
 }
 
+pub struct V4FetchArgs {
+    id: B256,
+    chain: u64,
+    log: Log<all_sol_types::sol_types::IPoolManager::Swap>,
+}
+
 impl MasterContext {
-    pub fn handle_v4_swap(
+    async fn v4_fetch(args: V4FetchArgs, ctx: &MasterContext) {
+        let (id, chain) = (args.id, args.chain);
+        if let Some(v4_contracts) = ctx.v4_contracts.get(&chain) {
+            let pos_man = v4_contracts.value().position_manager.clone();
+            if let Ok(key) = get_v4_key(id, pos_man).await {
+                let ik = IdKey { id: chain, key: id };
+                ctx.v4_pools
+                    .entry(ik)
+                    .and_modify(|x| x.config = Some(key.clone().into()))
+                    .or_insert_with(|| PartialV4Pool {
+                        chain,
+                        state_view: v4_contracts.state_view.address().clone(),
+                        config: Some(key.into()),
+                        state: None,
+                    });
+            }
+        };
+    }
+
+    async fn spaw_v4_fetch_worker(ctx: &MasterContext, mut rx: Receiver<V4FetchArgs>) {
+        let worker = std::thread::scope(|_| async move {
+            while let Ok(r) = rx.recv().await {
+                let Some(v4_contracts) = ctx.v4_contracts.get(&r.chain) else {
+                    continue;
+                };
+
+                let state_view = *v4_contracts.state_view.address();
+                let log = r.log.inner;
+
+                let Some(v4_contracts) = ctx.v4_contracts.get(&r.chain) else {
+                    continue;
+                };
+
+                let Ok(call) = get_v4_key(r.id, v4_contracts.position_manager.clone()).await else {
+                    continue;
+                };
+
+                let config = V4Config {
+                    fee: call.fee,
+                    tick_spacing: call.tickSpacing,
+                    hooks: call.hooks,
+                    token0: call.currency0,
+                    token1: call.currency1,
+                };
+
+                let state = V3State {
+                    tick: log.tick,
+                    x96price: log.sqrtPriceX96,
+                    liquidity: log.liquidity,
+                };
+
+                PartialV4Pool {
+                    chain: r.chain,
+                    state_view,
+                    config: Some(config),
+                    state: Some(state),
+                };
+            }
+        })
+        .await;
+    }
+
+    pub async fn handle_v4_swap(
         &self,
         log: Log<all_sol_types::sol_types::IPoolManager::Swap>,
         chain_id: u64,
@@ -47,17 +124,14 @@ impl MasterContext {
             key: log.inner.data.id,
         };
 
-        let mut needs_update = false;
+        let args = V4FetchArgs {
+            id: log.inner.id,
+            chain: chain_id,
+            log: log,
+        };
 
-        self.v4_pools.entry(key).and_modify(|x| {
-            if let Some(mut stt) = x.state.as_mut() {
-            } else {
-                needs_update = true;
-            }
-        });
-
-        if needs_update {
-            self.v4_not_found_queue.lock().unwrap().push(key);
+        if let Err(err) = self.v4_fetcher.lock().unwrap().send(args).await {
+            println!("error {}", err);
         }
     }
 
@@ -76,7 +150,7 @@ impl MasterContext {
         self.v2_pools
             .entry(key)
             .and_modify(|x| {
-                if let Some(mut stt) = x.state.as_mut() {
+                if let Some(stt) = x.state.as_mut() {
                     stt.r0 += log.inner.amount0In.to::<u128>();
                     stt.r1 += log.inner.amount1In.to::<u128>();
                     stt.r0 -= log.inner.amount0Out.to::<u128>();
@@ -93,10 +167,12 @@ impl MasterContext {
             });
 
         if needs_update {
-            self.v2_reserves_queue.lock().unwrap().push(IdAddress {
-                id: chain_id,
-                address: log.address(),
-            });
+            if let Ok(mut lock) = self.v2_reserves_queue.write() {
+                lock.push(IdAddress {
+                    id: chain_id,
+                    address: log.address(),
+                });
+            }
         }
     }
 
@@ -133,5 +209,11 @@ impl MasterContext {
                 config: None,
                 state: None,
             });
+    }
+}
+
+impl From<ChainDataJsonModel> for MasterContext {
+    fn from(value: ChainDataJsonModel) -> Self {
+        todo!()
     }
 }

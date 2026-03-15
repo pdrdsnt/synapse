@@ -26,7 +26,7 @@ pub struct PartialV3Pool {
 #[derive(Debug)]
 pub struct PartialV4Pool {
     pub chain: u64,
-    pub address: Address,
+    pub state_view: Address,
     pub config: Option<V4Config>,
     pub state: Option<V3State>,
 }

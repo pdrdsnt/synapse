@@ -1,5 +1,3 @@
-use alloy_primitives::{U256, U512, aliases::U24};
-
 use crate::v3_base::{
     states::{TradeState, TradeStep},
     tick_math::{price_from_tick, tick_from_price},
@@ -7,6 +5,7 @@ use crate::v3_base::{
     v3_state::V3State,
     x96price_math::{compute_price_from0, compute_price_from1},
 };
+use alloy_primitives::{U256, U512, aliases::U24};
 
 use super::err::{MathError, TickError, TradeError};
 

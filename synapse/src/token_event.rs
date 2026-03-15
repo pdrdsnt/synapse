@@ -13,6 +13,7 @@ use alloy::{
     sol_types::SolEvent,
     transports::{RpcError, TransportErrorKind, http::reqwest::Url, ws::WsConnect},
 };
+
 use futures::channel::mpsc::UnboundedReceiver;
 
 // Ajuste os imports abaixo conforme os tipos reais no seu crate `sol::sol_types`.

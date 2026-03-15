@@ -14,11 +14,10 @@ struct PoolKey {
     uint24 fee;
     int24 tickSpacing;
     IHooks hooks;
-
 }
 
 // Event signature from Uniswap V4 PoolManager
-    event PoolInitialized(
+event PoolInitialized(
         address currency0,
         address currency1,
         uint24 fee,
@@ -212,6 +211,7 @@ library BalanceDeltaLibrary {
 
 
 #[derive(Serialize,Deserialize,Debug)]
+#[sol(rpc)]
 interface IPoolManager is IProtocolFees, IERC6909Claims, IExtsload, IExttload {
     error CurrencyNotSettled();
 
@@ -312,6 +312,13 @@ interface IPoolManager is IProtocolFees, IERC6909Claims, IExtsload, IExttload {
     function updateDynamicLPFee(PoolKey memory key, uint24 newDynamicLPFee) external;
 }
 
+
+#[derive(Debug, Serialize, Deserialize)]
+#[sol(rpc)]
+interface IPositionManager {
+    function poolKeys(bytes25 poolId) external view returns (PoolKey memory);
+
+}
 
 #[derive(Debug, Serialize, Deserialize)]
 #[sol(rpc)]
