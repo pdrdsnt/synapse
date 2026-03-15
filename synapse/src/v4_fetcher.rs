@@ -8,7 +8,7 @@ use all_sol_types::sol_types::{
     StateView::StateViewInstance,
 };
 use alloy::{primitives::B256, providers::Provider, rpc::types::Log};
-use chains_json::chains::ChainsJsonInput;
+use chains_json::{chain_json_model::DexJsonModel, chains::ChainsJsonInput};
 use cortex::{cortex::WsProvider, types::PartialV4Pool};
 use dashmap::DashMap;
 use futures::{SinkExt, channel::mpsc::Receiver, executor::block_on, future, lock::Mutex};
@@ -47,14 +47,18 @@ impl V4Fetcher {
         s
     }
 
-    async fn create_dex(&mut self, dex: &DexJsonModel) {
+    async fn update_v4(
+        &mut self,
+        dex: chains_json::chain_json_model::DexJsonModel,
+        contracts: Ordered
+    ) -> Option<chains_json::chain_json_model::DexJsonModel> {
         match dex {
             chains_json::chain_json_model::DexJsonModel::V2 {
                 address,
                 fee,
                 stable_fee,
-            } => todo!(),
-            chains_json::chain_json_model::DexJsonModel::V3 { address, fee } => todo!(),
+            } => return None,
+            chains_json::chain_json_model::DexJsonModel::V3 { address, fee } => return None
             chains_json::chain_json_model::DexJsonModel::V4 {
                 state_view,
                 pool_manager,
@@ -63,7 +67,9 @@ impl V4Fetcher {
                 quoter,
                 universal_router,
                 permit2,
-            } => todo!(),
+            } => {
+                return Some(DexJsonModel::V4 { state_view: (), pool_manager: (), postion_descriptor: (), position_manager: (), quoter: (), universal_router: (), permit2: () } )
+            },
         };
     }
 
