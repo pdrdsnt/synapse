@@ -35,12 +35,11 @@ use crate::{
 };
 
 pub struct MasterContext {
+    chains_providers: DashMap<u64, WsProvider>,
     v2_pools: DashMap<IdAddress, PartialV2Pool>,
     v3_pools: DashMap<IdAddress, PartialV3Pool>,
     v4_pools: DashMap<IdKey, PartialV4Pool>,
-
     v4_fetch_worker: Arc<RwLock<V4Fetcher>>,
-
     pools_by_token: DashMap<IdAddress, Vec<EvaluatedPool>>,
     v4_contracts: DashMap<u64, V4Contracts<WsProvider>>,
     v2_reserves_queue: Arc<RwLock<Vec<IdAddress>>>,
@@ -216,7 +215,5 @@ impl MasterContext {
 }
 
 impl From<ChainDataJsonModel> for MasterContext {
-    fn from(value: ChainDataJsonModel) -> Self {
-        todo!()
-    }
+    fn from(value: ChainDataJsonModel) -> Self {}
 }

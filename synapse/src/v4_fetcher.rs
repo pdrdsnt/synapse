@@ -14,7 +14,7 @@ use dashmap::DashMap;
 use futures::{SinkExt, channel::mpsc::Receiver, executor::block_on, future, lock::Mutex};
 use shape::{id_address::IdKey, p_config::V4Config, p_state::V3State};
 
-use crate::{calls::get_v4_key, master_context::V4FetchArgs};
+use crate::calls::get_v4_key;
 
 pub struct V4Fetcher {
     contracts: DashMap<u64, V4Contracts<WsProvider>>,
@@ -32,6 +32,7 @@ impl V4Fetcher {
         let contracts = DashMap::<u64, V4Contracts<WsProvider>>::new();
 
         for (chain_id, dta) in data.chains {
+            chaing_provider = 
             let v4_dex_contracts = dta.dexes.iter().map(|dex| match dex {
                 DexJsonModel::V2 {
                     address,
@@ -49,8 +50,7 @@ impl V4Fetcher {
                     permit2,
                 } => {
                     let contracts: V4Contracts<WsProvider> = V4Contracts {
-                        state_view: todo!(),
-                        position_manager: todo!(),
+                        state_view: StateViewInstance::new(state_view, pro)                   position_manager: todo!(),
                         pools_manager: todo!(),
                     };
                 }
@@ -185,12 +185,15 @@ impl V4Fetcher {
             log: log,
         };
 
+        //ideal is to make args come back on Err(err) and them print
+        println!("sending args: {:?}", &args);
         if let Err(err) = self.sender.lock().await.send(args).await {
-            println!("error {}", err);
+            println!("error sending args to fetch worker {:?}", err);
         }
     }
 }
 
+#[derive(Debug)]
 pub struct V4FetchArgs {
     pub id: B256,
     pub chain: u64,
