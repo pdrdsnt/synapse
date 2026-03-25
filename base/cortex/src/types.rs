@@ -51,6 +51,8 @@ pub struct PartialV3Dex {
 pub struct PartialV4Dex {
     pub chain: u64,
     pub state_view: Address,
+    pub position_manager: Option<Address>,
+    pub position_descriptor: Option<Address>,
     pub id: Option<DexId>,
 }
 #[derive(Debug)]

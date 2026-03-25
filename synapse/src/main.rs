@@ -48,8 +48,10 @@ pub type WsProvider = alloy::providers::fillers::FillProvider<
 >;
 
 fn main() {
-    let static = chains_json::chains::
-    let ctx = MasterContext::from(value);
+    let data = chains_json::chains::ChainsJsonInput::try_default() else {
+        panic!("invalid json data")
+    };
+    let ctx = todo!();
 }
 
 pub async fn ws_sub<P: Provider + Clone>(
@@ -78,7 +80,9 @@ async fn watch_chains() {
     let waiting_time = 2;
     let listening_time = 2;
 
-    let chains = ChainsJsonInput::default();
+    let Ok(chains) = ChainsJsonInput::try_default() else {
+        panic!("invalid json data")
+    };
     let pool_events: HashMap<B256, UnifiedPoolEvent> = generate_pools_events_map();
 
     let available_chains = chains.chains;

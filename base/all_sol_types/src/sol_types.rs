@@ -73,6 +73,63 @@ interface IUniswapV3Factory {
     function enableFeeAmount(uint24 fee, int24 tickSpacing) external;
 }
 
+/// PERMIT2
+    #[derive(Serialize, Deserialize, Debug)]
+    struct PermitDetails {
+        address token;
+        uint160 amount;
+        uint48 expiration;
+        uint48 nonce;
+    }
+
+    #[derive(Serialize, Deserialize, Debug)]
+    struct PermitSingle {
+        PermitDetails details;
+        address spender;
+        uint256 sigDeadline;
+    }
+
+    #[derive(Serialize, Deserialize, Debug)]
+    #[sol(rpc)]
+    interface IPermit2 {
+        function permit(address owner, PermitSingle memory permitSingle, bytes calldata signature) external;
+        function transferFrom(address user, address spender, uint160 amount, address token) external;
+        function approve(address token, address spender, uint160 amount, uint48 expiration) external;
+        function allowance(address user, address token, address spender) external view returns (uint160 amount, uint48 expiration, uint48 nonce);
+    }
+
+    /// UNIVERSAL ROUTER
+    #[derive(Serialize, Deserialize, Debug)]
+    #[sol(rpc)]
+    interface IUniversalRouter {
+        function execute(bytes calldata commands, bytes[] calldata inputs) external payable;
+        function execute(bytes calldata commands, bytes[] calldata inputs, uint256 deadline) external payable;
+    }
+
+    /// QUOTER (V4)
+    #[derive(Serialize, Deserialize, Debug)]
+    struct QuoteExactSingleParams {
+        PoolKey poolKey; // Relies on PoolKey from the previous block
+        bool zeroForOne;
+        uint128 exactAmount;
+        uint160 sqrtPriceLimitX96;
+        bytes hookData;
+    }
+
+    #[derive(Serialize, Deserialize, Debug)]
+    #[sol(rpc)]
+    interface IV4Quoter {
+        function quoteExactInputSingle(QuoteExactSingleParams memory params) external returns (uint256 amountOut, uint256 gasEstimate);
+        function quoteExactOutputSingle(QuoteExactSingleParams memory params) external returns (uint256 amountIn, uint256 gasEstimate);
+    }
+
+    /// POSITION DESCRIPTOR
+    #[derive(Serialize, Deserialize, Debug)]
+    #[sol(rpc)]
+    interface IPositionDescriptor {
+        function tokenURI(uint256 tokenId) external view returns (string memory);
+    }
+
 
 #[derive(Serialize,Deserialize,Debug)]
 #[sol(rpc)]

@@ -29,26 +29,26 @@ use shape::{
     p_state::V3State,
 };
 
-use crate::calls::{self, get_v4_key};
+use crate::{
+    calls::{self, get_v4_key},
+    v4_fetcher::{V4Contracts, V4FetchArgs, V4Fetcher},
+};
 
 pub struct MasterContext {
     v2_pools: DashMap<IdAddress, PartialV2Pool>,
     v3_pools: DashMap<IdAddress, PartialV3Pool>,
+    v4_pools: DashMap<IdKey, PartialV4Pool>,
+
+    v4_fetch_worker: Arc<RwLock<V4Fetcher>>,
 
     pools_by_token: DashMap<IdAddress, Vec<EvaluatedPool>>,
-
+    v4_contracts: DashMap<u64, V4Contracts<WsProvider>>,
     v2_reserves_queue: Arc<RwLock<Vec<IdAddress>>>,
 }
 
 pub struct EvaluatedPool {
     pool: AnyPartialPool,
     eval: Option<PoolEvaluation>,
-}
-
-pub struct V4FetchArgs {
-    id: B256,
-    chain: u64,
-    log: Log<all_sol_types::sol_types::IPoolManager::Swap>,
 }
 
 impl MasterContext {
@@ -130,9 +130,12 @@ impl MasterContext {
             log: log,
         };
 
-        if let Err(err) = self.v4_fetcher.lock().unwrap().send(args).await {
-            println!("error {}", err);
-        }
+        let write_result = self
+            .v4_fetch_worker
+            .write()
+            .unwrap()
+            .handle_v4_swap(args, chain_id)
+            .await;
     }
 
     pub fn handle_v2_swap(

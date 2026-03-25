@@ -14,7 +14,7 @@ use dashmap::DashMap;
 use futures::{SinkExt, channel::mpsc::Receiver, executor::block_on, future, lock::Mutex};
 use shape::{id_address::IdKey, p_config::V4Config, p_state::V3State};
 
-use crate::calls::get_v4_key;
+use crate::{calls::get_v4_key, master_context::V4FetchArgs};
 
 pub struct V4Fetcher {
     contracts: DashMap<u64, V4Contracts<WsProvider>>,
@@ -29,8 +29,35 @@ impl V4Fetcher {
 
         let mut providers: HashMap<u64, String>;
 
+        let contracts = DashMap::<u64, V4Contracts<WsProvider>>::new();
+
+        for (chain_id, dta) in data.chains {
+            let v4_dex_contracts = dta.dexes.iter().map(|dex| match dex {
+                DexJsonModel::V2 {
+                    address,
+                    fee,
+                    stable_fee,
+                } => (),
+                DexJsonModel::V3 { address, fee } => (),
+                DexJsonModel::V4 {
+                    state_view,
+                    pool_manager,
+                    postion_descriptor,
+                    position_manager,
+                    quoter,
+                    universal_router,
+                    permit2,
+                } => {
+                    let contracts: V4Contracts<WsProvider> = V4Contracts {
+                        state_view: todo!(),
+                        position_manager: todo!(),
+                        pools_manager: todo!(),
+                    };
+                }
+            });
+        }
         let mut s = Self {
-            contracts: todo!(),
+            contracts,
             pools: todo!(),
             not_found: todo!(),
             sender: todo!(),
@@ -50,7 +77,6 @@ impl V4Fetcher {
     async fn update_v4(
         &mut self,
         dex: chains_json::chain_json_model::DexJsonModel,
-        contracts: Ordered
     ) -> Option<chains_json::chain_json_model::DexJsonModel> {
         match dex {
             chains_json::chain_json_model::DexJsonModel::V2 {
@@ -58,7 +84,9 @@ impl V4Fetcher {
                 fee,
                 stable_fee,
             } => return None,
-            chains_json::chain_json_model::DexJsonModel::V3 { address, fee } => return None
+            chains_json::chain_json_model::DexJsonModel::V3 { address, fee } => {
+                todo!()
+            }
             chains_json::chain_json_model::DexJsonModel::V4 {
                 state_view,
                 pool_manager,
@@ -68,8 +96,16 @@ impl V4Fetcher {
                 universal_router,
                 permit2,
             } => {
-                return Some(DexJsonModel::V4 { state_view: (), pool_manager: (), postion_descriptor: (), position_manager: (), quoter: (), universal_router: (), permit2: () } )
-            },
+                return Some(DexJsonModel::V4 {
+                    state_view: state_view,
+                    pool_manager: pool_manager,
+                    postion_descriptor: postion_descriptor,
+                    position_manager: position_manager,
+                    quoter: quoter,
+                    universal_router: universal_router,
+                    permit2: permit2,
+                });
+            }
         };
     }
 
@@ -94,7 +130,7 @@ impl V4Fetcher {
 
     pub fn spaw_fetch_worker(&self) {}
 
-    pub fn blocking_receive(&self, mut rx: Receiver<V4FetchArgs>) {
+    fn blocking_receive(&self, mut rx: Receiver<V4FetchArgs>) {
         block_on(async move {
             while let Ok(r) = rx.recv().await {
                 let Some(v4_contracts) = self.contracts.get(&r.chain) else {
@@ -136,11 +172,8 @@ impl V4Fetcher {
         });
     }
 
-    pub async fn handle_v4_swap(
-        &self,
-        log: Log<all_sol_types::sol_types::IPoolManager::Swap>,
-        chain_id: u64,
-    ) {
+    pub async fn handle_v4_swap(&self, args: V4FetchArgs, chain_id: u64) {
+        let log: Log<all_sol_types::sol_types::IPoolManager::Swap> = args.log;
         let key = IdKey {
             id: chain_id,
             key: log.inner.data.id,
@@ -159,13 +192,13 @@ impl V4Fetcher {
 }
 
 pub struct V4FetchArgs {
-    id: B256,
-    chain: u64,
-    log: Log<all_sol_types::sol_types::IPoolManager::Swap>,
+    pub id: B256,
+    pub chain: u64,
+    pub log: Log<all_sol_types::sol_types::IPoolManager::Swap>,
 }
 
 pub struct V4Contracts<P: Provider + Clone + Send + Sync> {
-    state_view: StateViewInstance<P>,
-    position_manager: IPositionManagerInstance<P>,
-    pools_manager: IPoolManagerInstance<P>,
+    pub state_view: StateViewInstance<P>,
+    pub position_manager: IPositionManagerInstance<P>,
+    pub pools_manager: IPoolManagerInstance<P>,
 }
