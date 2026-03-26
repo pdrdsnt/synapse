@@ -31,7 +31,7 @@ use shape::{
 
 use crate::{
     calls::{self, get_v4_key},
-    v4_fetcher::{V4Contracts, V4FetchArgs, V4Fetcher},
+    v4_fetcher::{self, V4Contracts, V4FetchArgs, V4Fetcher},
 };
 
 pub struct MasterContext {
@@ -51,6 +51,26 @@ pub struct EvaluatedPool {
 }
 
 impl MasterContext {
+    async fn new() -> Self {
+        let v4_fetcher_worker = V4Fetcher {
+            contracts: todo!(),
+            pools: todo!(),
+            not_found: todo!(),
+            sender: todo!(),
+        };
+
+        Self {
+            chains_providers: DashMap::new(),
+            v2_pools: DashMap::new(),
+            v3_pools: DashMap::new(),
+            v4_pools: DashMap::new(),
+            v4_fetch_worker,
+            pools_by_token: DashMap::new(),
+            v4_contracts: DashMap::new(),
+            v2_reserves_queue: Arc::new(RwLock::new(Vec::new())),
+        }
+    }
+
     async fn v4_fetch(args: V4FetchArgs, ctx: &MasterContext) {
         let (id, chain) = (args.id, args.chain);
         if let Some(v4_contracts) = ctx.v4_contracts.get(&chain) {

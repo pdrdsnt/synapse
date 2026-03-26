@@ -96,6 +96,7 @@ async fn watch_chains() {
                     panic!("ws provider creation failed: {:?}", err)
                 }
             };
+            MasterContext
         }
     };
 
